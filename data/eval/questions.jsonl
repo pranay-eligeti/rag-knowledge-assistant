@@ -1,0 +1,3 @@
+{"question":"What metric can be used to evaluate whether the correct context was retrieved?","expected_source":"evaluation.md"}
+{"question":"Why should citations keep source identifiers attached to chunks?","expected_source":"rag-design.md"}
+{"question":"What is the role of dense retrieval embeddings?","expected_source":"retrieval.md"}
