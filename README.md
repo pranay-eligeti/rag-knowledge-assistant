@@ -1,4 +1,4 @@
-# 🧠 RAG Knowledge Assistant
+# RAG Knowledge Assistant
 
 > A grounded Retrieval-Augmented Generation (RAG) system with document ingestion, chunking, retrieval evaluation, citations, a FastAPI API, and an optional OpenAI generation layer.
 
@@ -26,7 +26,18 @@ The corpus is synthetic and contains no employer data, PHI, private documents, o
 
 ## Architecture
 
-See [`docs/architecture.md`](docs/architecture.md).
+```mermaid
+flowchart LR
+    A[PDF / Markdown / text] --> B[Overlapping chunks with source IDs]
+    B --> C[TF-IDF retrieval]
+    C --> D[Top-k context]
+    D --> E[Extractive / OpenAI generation]
+    E --> F[Answer and structured citations]
+    G[FastAPI] --> A
+    G --> C
+```
+
+The shipped `RagService` and API use TF-IDF. `DenseRetriever` is a separate sentence-transformers adapter with normalized embeddings; using it requires the `semantic` extra and application-level wiring. See [`docs/architecture.md`](docs/architecture.md).
 
 The pipeline deliberately separates retrieval from generation so each layer can be evaluated independently.
 
@@ -36,7 +47,7 @@ The pipeline deliberately separates retrieval from generation so each layer can 
 python -m venv .venv
 
 # Windows
-.venv\\Scripts\\activate
+.venv\Scripts\activate
 
 # macOS/Linux
 source .venv/bin/activate
@@ -87,14 +98,20 @@ The code uses `client.responses.create(...)` from the official OpenAI Python lib
 
 `data/eval/questions.jsonl` contains a small synthetic retrieval evaluation set. The automated test checks Recall@1 against that dataset.
 
-For a production system, the evaluation layer should expand to include:
+The existing suite checks overlapping chunks, Recall@1 on the synthetic evaluation set, source citations, and the health/query API contract. CI installs the project, compiles `src`, `tests`, and `scripts`, and runs pytest without model calls.
 
-- Recall@K / MRR / nDCG for retrieval
-- answer faithfulness / groundedness
-- citation correctness
-- no-answer / insufficient-context behavior
-- latency and cost tracking
-- regression datasets for every corpus change
+For evaluation of captured answers and retrieval outputs across additional metrics, see the separate [AI Evaluation Harness](https://github.com/pranay-eligeti/ai-evaluation-harness). It is a companion portfolio project, not an automatic integration in this service.
+
+## Validation
+
+```bash
+python -m compileall -q src tests scripts
+python -m pytest
+```
+
+## Implementation scope
+
+The API indexes the local `data/docs` corpus in memory. Citations identify retrieved sources and chunks; they do not independently verify every generated claim. Dense model loading and optional OpenAI generation use external services/downloads only when explicitly selected by the caller.
 
 ## API contract
 
