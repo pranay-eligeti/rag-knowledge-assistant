@@ -104,6 +104,22 @@ For evaluation of captured answers and retrieval outputs across additional metri
 
 ## Validation
 
+### Optional offline capture export
+
+```bash
+python -m src.capture --run-id tfidf-baseline --top-k 1 --revision YOUR_COMMIT --output capture.json
+```
+
+This exporter uses the existing TF-IDF retrieval order and forces extractive
+generation, independent of live-generation environment settings. It emits the
+AI Evaluation Harness `capture-1` JSON contract: source-level metric IDs, chunk
+provenance, answers, citations and annotations from `data/eval/questions.jsonl`.
+Use `--questions` and `--knowledge-dir` for other public-safe fixtures. No harness
+dependency is required. Transfer the artifact to the harness and run `ai-eval run
+--capture ...`, then `ai-eval compare` on baseline/candidate reports. See the
+[capture and comparison contract](https://github.com/pranay-eligeti/ai-evaluation-harness/blob/main/docs/REGRESSION_COMPARISON.md).
+The API and separate optional dense adapter retain their current behavior.
+
 ```bash
 python -m compileall -q src tests scripts
 python -m pytest

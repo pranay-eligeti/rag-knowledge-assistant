@@ -18,3 +18,5 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: python -m compileall -q src tests scripts
       - run: pytest
+      - name: Offline capture export
+        run: python -m src.capture --run-id ci-tfidf --top-k 1 --output scratch/capture.json
