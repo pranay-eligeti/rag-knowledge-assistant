@@ -11,7 +11,9 @@ _WORD_RE = re.compile(r"\S+")
 
 def chunk_document(document: Document, chunk_size: int = 120, overlap: int = 24) -> list[Chunk]:
     if chunk_size <= 0 or overlap < 0 or overlap >= chunk_size:
-        raise ValueError("chunk_size must be > 0 and overlap must satisfy 0 <= overlap < chunk_size")
+        raise ValueError(
+            "chunk_size must be > 0 and overlap must satisfy 0 <= overlap < chunk_size"
+        )
 
     words = _WORD_RE.findall(document.text)
     chunks: list[Chunk] = []

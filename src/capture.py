@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from .generator import Generator
+from .paths import DATA_DIR
 from .service import RagService
 
 
@@ -31,7 +32,7 @@ def capture_run(
     seen = set()
     for index, row in enumerate(questions):
         case_id = row.get("case_id", f"rag-{index + 1}")
-        question = row["question"]
+        question = row.get("question")
         if not isinstance(case_id, str) or not case_id.strip() or case_id in seen:
             raise ValueError("Missing or duplicate case ID")
         if not isinstance(question, str) or not question.strip():
@@ -42,11 +43,14 @@ def capture_run(
         expected = row.get("expected_source")
         if expected is not None and (not isinstance(expected, str) or not expected.strip()):
             raise ValueError("Expected source must be nonblank text")
+        reference = row.get("reference_answer")
+        if reference is not None and not isinstance(reference, str):
+            raise ValueError("Reference answer must be text or null")
         cases.append(
             {
                 "case_id": case_id,
                 "question": question,
-                "reference_answer": row.get("reference_answer"),
+                "reference_answer": reference,
                 "generated_answer": answer.answer,
                 "retrieved_documents": [
                     {
@@ -78,15 +82,17 @@ def capture_run(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Export an offline TF-IDF RAG capture")
-    parser.add_argument("--knowledge-dir", type=Path, default=Path("data/docs"))
-    parser.add_argument("--questions", type=Path, default=Path("data/eval/questions.jsonl"))
+    parser.add_argument("--knowledge-dir", type=Path, default=DATA_DIR / "docs")
+    parser.add_argument("--questions", type=Path, default=DATA_DIR / "eval/questions.jsonl")
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--revision")
     parser.add_argument("--top-k", type=int, default=3)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     questions = [
-        json.loads(line) for line in args.questions.read_text().splitlines() if line.strip()
+        json.loads(line)
+        for line in args.questions.read_text(encoding="utf-8").splitlines()
+        if line.strip()
     ]
     capture = capture_run(
         args.knowledge_dir, questions, run_id=args.run_id, top_k=args.top_k, revision=args.revision

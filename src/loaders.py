@@ -8,7 +8,6 @@ from pypdf import PdfReader
 
 from .models import Document
 
-
 SUPPORTED = {".txt", ".md", ".pdf"}
 
 

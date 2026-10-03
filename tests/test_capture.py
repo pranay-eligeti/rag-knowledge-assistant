@@ -33,6 +33,8 @@ def test_capture_is_offline_and_repeatable(monkeypatch):
         ([{"question": " "}], 3),
         ([{"question": "q", "expected_source": []}], 3),
         ([{"question": "q", "case_id": "a"}] * 2, 3),
+        ([{}], 3),
+        ([{"question": "q", "reference_answer": []}], 3),
     ],
 )
 def test_invalid_capture_inputs(rows, k):

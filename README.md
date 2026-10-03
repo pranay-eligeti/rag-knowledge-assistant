@@ -44,6 +44,8 @@ The pipeline deliberately separates retrieval from generation so each layer can 
 ## Quick start
 
 ```bash
+git clone https://github.com/pranay-eligeti/rag-knowledge-assistant.git
+cd rag-knowledge-assistant
 python -m venv .venv
 
 # Windows
@@ -87,6 +89,7 @@ Then use `DenseRetriever` from `src.retriever` in an application-specific servic
 Retrieval works without an API key. To enable the OpenAI generation path:
 
 ```bash
+pip install -e ".[openai]"
 export OPENAI_API_KEY="..."
 export RAG_LLM_MODE=openai
 export OPENAI_MODEL=gpt-5.5
@@ -100,7 +103,7 @@ The code uses `client.responses.create(...)` from the official OpenAI Python lib
 
 The existing suite checks overlapping chunks, Recall@1 on the synthetic evaluation set, source citations, and the health/query API contract. CI installs the project, compiles `src`, `tests`, and `scripts`, and runs pytest without model calls.
 
-For evaluation of captured answers and retrieval outputs across additional metrics, see the separate [AI Evaluation Harness](https://github.com/pranay-eligeti/ai-evaluation-harness). It is a companion portfolio project, not an automatic integration in this service.
+For evaluation of captured answers and retrieval outputs across additional metrics, see the separate [AI Evaluation Harness](https://github.com/pranay-eligeti/ai-evaluation-harness). The optional capture exporter connects the projects through JSON artifacts; evaluation remains outside the API runtime.
 
 ## Validation
 
@@ -123,11 +126,14 @@ The API and separate optional dense adapter retain their current behavior.
 ```bash
 python -m compileall -q src tests scripts
 python -m pytest
+ruff check src tests scripts
+ruff format --check src tests scripts
+python -m pip wheel --no-deps . --wheel-dir scratch/wheels
 ```
 
 ## Implementation scope
 
-The API indexes the local `data/docs` corpus in memory. Citations identify retrieved sources and chunks; they do not independently verify every generated claim. Dense model loading and optional OpenAI generation use external services/downloads only when explicitly selected by the caller.
+The API indexes the synthetic `data/docs` corpus in memory. Wheels include this public demo corpus and evaluation questions, so default API queries and capture export also work outside a source checkout. Source filenames are IDs; use unique filenames across corpus directories. Citations identify retrieved sources and chunks; they do not independently verify every generated claim. Dense model loading and optional OpenAI generation use external services/downloads only when explicitly selected by the caller.
 
 ## API contract
 

@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 env:
   PYTHONPATH: .
 
@@ -16,7 +19,17 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
+      - run: ruff check src tests scripts
+      - run: ruff format --check src tests scripts
       - run: python -m compileall -q src tests scripts
       - run: pytest
       - name: Offline capture export
         run: python -m src.capture --run-id ci-tfidf --top-k 1 --output scratch/capture.json
+      - name: Wheel installation and bundled offline corpus
+        run: |
+          python -m pip wheel --no-deps . --wheel-dir scratch/wheels
+          python -m venv scratch/wheel-env
+          scratch/wheel-env/bin/python -m pip install scratch/wheels/*.whl
+          cd scratch
+          wheel-env/bin/python -m src.capture --run-id wheel-demo --output wheel-capture.json
+          wheel-env/bin/python -c "import importlib.util; from src.api import service; assert importlib.util.find_spec('openai') is None; assert service.query('What are the stages of a RAG pipeline?').citations"

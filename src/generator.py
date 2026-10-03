@@ -6,7 +6,6 @@ import os
 
 from .models import Answer, Citation, RetrievalResult
 
-
 SYSTEM_INSTRUCTIONS = """You are a grounded knowledge assistant.
 Answer using only the supplied context. Do not invent facts that are absent from the context.
 When the context is insufficient, say that the available documents do not contain the answer.
@@ -51,18 +50,28 @@ class Generator:
     ) -> Answer:
         try:
             from openai import OpenAI
-        except ImportError as exc:  # pragma: no cover
-            raise RuntimeError("Install the openai package to use RAG_LLM_MODE=openai") from exc
+        except ImportError:
+            raise RuntimeError(
+                "Install rag-knowledge-assistant[openai] to use RAG_LLM_MODE=openai"
+            ) from None
 
         context = "\n\n".join(
-            f"SOURCE: {result.chunk.source}\n{result.chunk.text}" for result in results if result.score > 0
+            f"SOURCE: {result.chunk.source}\n{result.chunk.text}"
+            for result in results
+            if result.score > 0
         )
-        client = OpenAI()
-        response = client.responses.create(
-            model=self.model,
-            instructions=SYSTEM_INSTRUCTIONS,
-            input=f"Question:\n{question}\n\nContext:\n{context}",
-        )
+        try:
+            with OpenAI() as client:
+                response = client.responses.create(
+                    model=self.model,
+                    instructions=SYSTEM_INSTRUCTIONS,
+                    input=f"Question:\n{question}\n\nContext:\n{context}",
+                )
+        except Exception:
+            # SDK failures can contain keys, request content, or provider response bodies.
+            raise RuntimeError(
+                "OpenAI generation failed; check credentials, model, and provider availability"
+            ) from None
         return Answer(
             answer=response.output_text,
             citations=citations,

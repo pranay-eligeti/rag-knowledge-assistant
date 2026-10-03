@@ -22,7 +22,10 @@ def test_retrieval_recall_at_one_on_eval_set():
     root = Path(__file__).resolve().parents[1]
     service = RagService(root / "data" / "docs", generator=Generator(mode="extractive"))
     service.ingest()
-    rows = [json.loads(line) for line in (root / "data" / "eval" / "questions.jsonl").read_text().splitlines()]
+    rows = [
+        json.loads(line)
+        for line in (root / "data" / "eval" / "questions.jsonl").read_text().splitlines()
+    ]
     hits = 0
     for row in rows:
         result = service.retriever.search(row["question"], top_k=1)  # type: ignore[union-attr]
@@ -32,7 +35,11 @@ def test_retrieval_recall_at_one_on_eval_set():
 
 
 def test_answer_contains_citations_when_context_matches():
-    chunks = chunk_document(Document(source="source.md", text="Recall@K measures whether relevant context was retrieved."))
+    chunks = chunk_document(
+        Document(
+            source="source.md", text="Recall@K measures whether relevant context was retrieved."
+        )
+    )
     answer = Generator(mode="extractive").answer(
         "What measures retrieval?", TfidfRetriever(chunks).search("What measures retrieval?", 2)
     )
@@ -43,7 +50,9 @@ def test_answer_contains_citations_when_context_matches():
 def test_api_health_and_query():
     client = TestClient(app)
     assert client.get("/health").json() == {"status": "ok"}
-    response = client.post("/query", json={"question": "What are the stages of a RAG pipeline?", "top_k": 2})
+    response = client.post(
+        "/query", json={"question": "What are the stages of a RAG pipeline?", "top_k": 2}
+    )
     assert response.status_code == 200
     payload = response.json()
     assert payload["answer"]

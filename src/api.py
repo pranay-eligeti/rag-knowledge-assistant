@@ -2,15 +2,13 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from fastapi import FastAPI, HTTPException
 
 from .models import QueryRequest, QueryResponse
+from .paths import DATA_DIR
 from .service import RagService
 
-BASE_DIR = Path(__file__).resolve().parents[1]
-service = RagService(BASE_DIR / "data" / "docs")
+service = RagService(DATA_DIR / "docs")
 app = FastAPI(title="RAG Knowledge Assistant", version="0.1.0")
 
 
